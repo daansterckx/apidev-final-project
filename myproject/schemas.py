@@ -1,17 +1,12 @@
 from pydantic import BaseModel
 
-
-
-
-class ClientBase(BaseModel):
-    email: str
-
-
-class ClientCreate(ClientBase):
+class ServiceBase(BaseModel):
+    id: int
     password: str
 
+class ServiceCreate(ServiceBase):
+    pass
 
-class Client(ClientBase):
-    id: int
+class Service(ServiceBase):
     class Config:
         orm_mode = True

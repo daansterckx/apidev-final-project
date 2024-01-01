@@ -1,11 +1,9 @@
-version: "3.9"
+version: '3.8'
 services:
- system-service:
-  image: daansterckx/apidev_p1
-  ports:
-    - "8000:8000"
-  volumes:
-    - sqlite_useritems_volume:/code/sqlitedb
-
-volumes:
-  sqlite_useritems_volume:
+  app:
+    build: .
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    volumes:
+      - .:/app
+    ports:
+      - 8000:8000

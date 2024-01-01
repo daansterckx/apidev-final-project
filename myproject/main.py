@@ -16,8 +16,9 @@ print("Creating tables.......")
 models.Base.metadata.create_all(bind=engine)
 print("Tables created.......")
 
-app = FastAPI()
+models.Base.metadata.create_all(bind=engine)
 
+app = FastAPI()
 
 # Dependency
 def get_db():
@@ -27,35 +28,45 @@ def get_db():
     finally:
         db.close()
 
+@app.post("/service/", response_model=schemas.Service)
+def create_service(service: schemas.ServiceCreate, db: Session = Depends(get_db)):
+    db_service = crud.get_service_by_id(db, service_id=service.id)
+    if db_service:
+        raise HTTPException(status_code=400, detail="Service ID already exists")
+    return crud.create_service(db=db, service=service)
 
-@app.post("/client/", response_model=schemas.Client)
-def create_client(client: schemas.ClientCreate, db: Session = Depends(get_db)):
-    db_client = crud.get_user_by_email(db, email=client.email)
-    if db_client:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    return crud.create_user(db=db, client=client)
+@app.put("/service/{service_id}")
+def add_password(service_id: int, password: str, db: Session = Depends(get_db)):
+    db_service = crud.get_service_by_id(db, service_id=service_id)
+    if db_service is None:
+        raise HTTPException(status_code=404, detail="Service not found")
+    return crud.update_service_password(db=db, service_id=service_id, password=password)
 
+@app.delete("/service/{service_id}")
+def delete_service(service_id: int, db: Session = Depends(get_db)):
+    db_service = crud.get_service_by_id(db, service_id=service_id)
+    if db_service is None:
+        raise HTTPException(status_code=404, detail="Service not found")
+    crud.delete_service(db=db, service_id=service_id)
+    return {"message": "Service deleted successfully"}
 
-@app.get("/clients/", response_model=list[schemas.Client])
-def read_clients(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    clients = crud.get_clients(db, skip=skip, limit=limit)
-    return clients
+@app.get("/service/{service_id}", response_model=schemas.Service)
+def get_service(service_id: int, db: Session = Depends(get_db)):
+    db_service = crud.get_service_by_id(db, service_id=service_id)
+    if db_service is None:
+        raise HTTPException(status_code=404, detail="Service not found")
+    return db_service
 
+@app.get("/service_id/{password}")
+def get_service_id(password: str, db: Session = Depends(get_db)):
+    db_service = crud.get_service_by_password(db, password=password)
+    if db_service is None:
+        raise HTTPException(status_code=404, detail="Service not found")
+    return {"id": db_service.id}
 
-@app.get("/clients/{client_id}", response_model=schemas.Client)
-def read_client(client_id: int, db: Session = Depends(get_db)):
-    db_client = crud.get_user(db, user_id=client_id)
-    if db_client is None:
-        raise HTTPException(status_code=404, detail="Client not found")
-    return db_client
-
-
-@app.delete("/delete/{client_id}", response_model=schemas.Client)
-async def delete_client(clientid: int, db: Session = Depends(get_db)):
-    record = db.query(clientid).filter(clientid.id == id).first()
-    if record:
-        db.delete(clientid)
-        db.commit()
-        return {"message": "Record deleted successfully."}
-    else:
-        return {"message": "Record not found."}
+@app.get("/service_password/{service_id}")
+def get_service_password(service_id: int, db: Session = Depends(get_db)):
+    db_service = crud.get_service_by_id(db, service_id=service_id)
+    if db_service is None:
+        raise HTTPException(status_code=404, detail="Service not found")
+    return {"password": db_service.password}

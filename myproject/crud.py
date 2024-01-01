@@ -1,29 +1,31 @@
 from sqlalchemy.orm import Session
+from . import models, schemas
 
-import models
-import schemas
+def get_service_by_id(db: Session, service_id: int):
+    return db.query(models.Service).filter(models.Service.id == service_id).first()
 
+def get_service_by_password(db: Session, password: str):
+    return db.query(models.Service).filter(models.Service.password == password).first()
 
-def get_client(db: Session, client_id: int):
-    return db.query(models.Client).filter(models.Client.id == client_id).first()
-
-
-def get_client_by_email(db: Session, email: str):
-    return db.query(models.Client).filter(models.Client.email == email).first()
-
-
-def get_clients(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Client).offset(skip).limit(limit).all()
-
-
-def create_client(db: Session, client: schemas.ClientCreate):
-    fake_hashed_password = client.password + "notreallyhashed"
-    db_client = models.Client(email=client.email, hashed_password=fake_hashed_password)
-    db.add(db_client)
+def create_service(db: Session, service: schemas.ServiceCreate):
+    db_service = models.Service(id=service.id, password=service.password)
+    db.add(db_service)
     db.commit()
-    db.refresh(db_client)
-    return db_client
+    db.refresh(db_service)
+    return db_service
 
+def update_service_password(db: Session, service_id: int, password: str):
+    db_service = db.query(models.Service).filter(models.Service.id == service_id).first()
+    if db_service is None:
+        return None
+    db_service.password = password
+    db.commit()
+    return db_service
 
-
-
+def delete_service(db: Session, service_id: int):
+    db_service = db.query(models.Service).filter(models.Service.id == service_id).first()
+    if db_service is None:
+        return None
+    db.delete(db_service)
+    db.commit()
+    return db_service
