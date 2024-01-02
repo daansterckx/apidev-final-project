@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from . import models, schemas
+import models, schemas
 
 def get_service_by_id(db: Session, service_id: int):
     return db.query(models.Service).filter(models.Service.id == service_id).first()

@@ -1,6 +1,6 @@
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
-
+from fastapi import Query
 import os
 import crud
 import models
@@ -34,9 +34,12 @@ def create_service(service: schemas.ServiceCreate, db: Session = Depends(get_db)
     if db_service:
         raise HTTPException(status_code=400, detail="Service ID already exists")
     return crud.create_service(db=db, service=service)
+    
 
 @app.put("/service/{service_id}")
-def add_password(service_id: int, password: str, db: Session = Depends(get_db)):
+def add_password(service_id: int, password: str = Query(...), db: Session = Depends(get_db)):
+    print(f"Received service_id: {service_id}")
+    print(f"Received password: {password}")
     db_service = crud.get_service_by_id(db, service_id=service_id)
     if db_service is None:
         raise HTTPException(status_code=404, detail="Service not found")
